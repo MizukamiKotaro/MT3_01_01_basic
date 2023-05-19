@@ -27,15 +27,16 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 	MyVector3 v2{ 2.8f,0.4f,-1.3f };
 	MyVector3 cross = Calc::Cross(v1, v2);
 
-	MyVector3 kLocalVertices[3]{ {0.0f,0.1f,0.0f},{0.1f,-0.1f,0.0f},{-0.1f,-0.1f,0.0f} };
+	MyVector3 kLocalVertices[3]{ {0.0f,0.1f,0.0f},{0.5f,-0.5f,0.0f},{-0.5f,-0.5f,0.0f} };
 
 	MyVector3 rotate{};
-	MyVector3 translate{};
+	MyVector3 translate{ 0.0f,0.0f,10.0f };
 
 	float speed = 0.01f;
 
-	MyVector3 cameraPosition{ 0.0f,0.0f,-5.0f };
-
+	MyVector3 cameraPosition{ 0.0f,0.0f,-0.1f };
+	MyVector3 cameraDirection{ 0.0f,0.0f,1.0f };
+	MyVector3 cameraRotate{};
 	
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -73,7 +74,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		}
 
 		MyMatrix4x4 worldMatrix = MyMatrix4x4::MakeAffinMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-		MyMatrix4x4 cameraMatrix = MyMatrix4x4::MakeAffinMatrix({ 1.0f,1.0f,1.0f }, {0.0f,0.0f,0.0f }, cameraPosition);
+		MyMatrix4x4 cameraMatrix = MyMatrix4x4::MakeAffinMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraPosition);
 		MyMatrix4x4 viewMatrix = MyMatrix4x4::Inverse(cameraMatrix);
 		MyMatrix4x4 projectionMatrix = MyMatrix4x4::MakePerspectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		MyMatrix4x4 worldViewProjectionMatrix = MyMatrix4x4::Multiply(worldMatrix, MyMatrix4x4::Multiply(viewMatrix, projectionMatrix));
@@ -95,8 +96,11 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR lpCmdLine, _In
 		///
 		
 		VectorScreenPrintf(0, 0, cross, "Cross");
-		Novice::DrawTriangle(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+		//cameraRotateを使っているけど向きのrotateを用意した方がいいかも
+		if (Calc::Dot(MyMatrix4x4::Multiply(cameraDirection ,MyMatrix4x4::MakeRotateXYZMatrix(cameraRotate)), Calc::Cross((screenVertices[1] - screenVertices[0]), (screenVertices[2] - screenVertices[1]))) <= 0) {
+			Novice::DrawTriangle(int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
+				int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid);
+		}
 
 		///
 		/// ↑描画処理ここまで
